@@ -1,9 +1,9 @@
 {
-  "name": "demo1",
+  "name": "cartoongenerator",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +13,7 @@
     "axios": "^1.11.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "nodemon": "^3.1.10",
     "openai": "^5.10.3",
     "twilio": "^5.8.0"
   }

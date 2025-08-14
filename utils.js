@@ -22,3 +22,8 @@ exports.downloadTwilioMedia = async (mediaUrl) => {
             return null;
         });
 }
+
+exports.encodeImage = async (filePath) => {
+    const base64Image = fs.readFileSync(filePath, "base64");
+    return base64Image;
+  }
