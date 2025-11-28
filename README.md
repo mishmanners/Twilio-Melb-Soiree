@@ -6,7 +6,7 @@ A WhatsApp bot that transforms user selfies into anime-style cartoons using Twil
 
 - 📱 **WhatsApp Integration**: Receive and respond to messages via Twilio
 - 🤖 **AI-Powered Image Generation**: Uses OpenAI's GPT-4o-mini with image generation tools
-- 🎭 **Cartton Style Transformation**: Converts user photos into acaricature style images
+- 🎭 **Cartoon Style Transformation**: Converts user photos into caricature-style images
 - 🖼️ **Automatic Processing**: Processes images in the background and sends results back
 - 📁 **File Management**: Automatically organizes generated images
 
@@ -48,7 +48,6 @@ Before running this application, make sure you have:
    TWILIO_ACCOUNT_SID=your_twilio_account_sid
    TWILIO_AUTH_TOKEN=your_twilio_auth_token
    OPENAI_API_KEY=your_openai_api_key
-   PORT=3001
    ```
 
 4. **Prepare the mask image**
@@ -84,12 +83,6 @@ Before running this application, make sure you have:
 3. **Wait for processing** - The AI will transform your photo into an anime-style cartoon
 4. **Receive the result** - The bot will send back your transformed image
 
-### Bot Messages (Portuguese)
-
-- When you send a photo: *"Sua imagem será processada em alguns minutos."*
-- When you send text: *"Envie por favor sua selfie para começar."*
-- When sending the result: *"Aqui está sua imagem"*
-
 ## 📁 Project Structure
 
 ```
@@ -124,7 +117,6 @@ twilio_whatsapp_cartoongenerator/
 | `TWILIO_ACCOUNT_SID` | Your Twilio Account SID | ✅ |
 | `TWILIO_AUTH_TOKEN` | Your Twilio Auth Token | ✅ |
 | `OPENAI_API_KEY` | Your OpenAI API Key | ✅ |
-| `PORT` | Server port (default: 3001) | ❌ |
 
 ## 📝 License
 
