@@ -53,7 +53,7 @@ app.post('/message', async (req, res) => {
         res.send(twiml.toString());
 
         const base64Image = await downloadTwilioMedia(req.body.MediaUrl0);
-        // const maskImageBase64 = await encodeImage('input/mask.png');
+        const maskImageBase64 = await encodeImage('input/mask.png');
 
         const PROMPT = `Create a wholesome, hand-drawn caricature-style drawing of the person(s) in the photo. Black and white lined drawing, and use one standout color: red. Simple shapes, high contrast, expressive faces, minimal background, 2D flat shading. Focus on character and charm. Consider a transparent background, but make sure the body or any part of the people aren't transparent. Don't add any text overlay that could be on the original picture, unless it's something they are wearing. Person's face and body and eyes needs to have some color. Any part of the person or anything or any object on the image should not be transparent. Don't add any new person if the picture doesn't have it.`;
 
@@ -69,10 +69,10 @@ app.post('/message', async (req, res) => {
                             type: "input_image",
                             file_id: maskFileId,
                         },
-                        // {
-                        //     type: "input_image",
-                        //     image_url: `data:image/png;base64,${maskImageBase64}`,
-                        // },
+                        {
+                            type: "input_image",
+                            image_url: `data:image/png;base64,${maskImageBase64}`,
+                        },
                         {
                             type: "input_image",
                             image_url: `data:${base64Image.contentType};base64,${base64Image.base64}`,
