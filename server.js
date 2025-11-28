@@ -348,6 +348,7 @@ app.get('/', async (req, res) => {
     <script>
         let images = [];
         let currentIndex = 0;
+        let autoAdvanceInterval = null;
         
         async function loadImages() {
             try {
@@ -373,6 +374,29 @@ app.get('/', async (req, res) => {
         function setupCarousel() {
             createDots();
             showImage(0);
+            startAutoAdvance();
+        }
+        
+        function startAutoAdvance() {
+            // Clear any existing interval
+            if (autoAdvanceInterval) {
+                clearInterval(autoAdvanceInterval);
+            }
+            
+            // Only start auto-advance if there are multiple images
+            if (images.length > 1) {
+                autoAdvanceInterval = setInterval(() => {
+                    const nextIndex = (currentIndex + 1) % images.length;
+                    showImage(nextIndex);
+                }, 5000); // 5 seconds
+            }
+        }
+        
+        function stopAutoAdvance() {
+            if (autoAdvanceInterval) {
+                clearInterval(autoAdvanceInterval);
+                autoAdvanceInterval = null;
+            }
         }
         
         function createDots() {
@@ -382,7 +406,13 @@ app.get('/', async (req, res) => {
             images.forEach((_, index) => {
                 const dot = document.createElement('span');
                 dot.className = 'dot';
-                dot.onclick = () => showImage(index);
+                dot.onclick = () => {
+                    // Stop auto-advance when user clicks dot
+                    stopAutoAdvance();
+                    showImage(index);
+                    // Restart auto-advance after manual interaction
+                    setTimeout(startAutoAdvance, 3000); // Wait 3 seconds before resuming
+                };
                 dotsContainer.appendChild(dot);
             });
         }
@@ -410,7 +440,11 @@ app.get('/', async (req, res) => {
         function changeImage(direction) {
             const newIndex = currentIndex + direction;
             if (newIndex >= 0 && newIndex < images.length) {
+                // Stop auto-advance when user manually navigates
+                stopAutoAdvance();
                 showImage(newIndex);
+                // Restart auto-advance after manual interaction
+                setTimeout(startAutoAdvance, 3000); // Wait 3 seconds before resuming
             }
         }
         
@@ -418,6 +452,15 @@ app.get('/', async (req, res) => {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') changeImage(-1);
             if (e.key === 'ArrowRight') changeImage(1);
+        });
+        
+        // Pause auto-advance on hover, resume on mouse leave
+        document.addEventListener('DOMContentLoaded', () => {
+            const carouselContainer = document.querySelector('.carousel-container');
+            if (carouselContainer) {
+                carouselContainer.addEventListener('mouseenter', stopAutoAdvance);
+                carouselContainer.addEventListener('mouseleave', startAutoAdvance);
+            }
         });
         
         // Auto-refresh every 30 seconds
