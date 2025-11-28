@@ -1,7 +1,6 @@
-
 require('dotenv').config();
 
-// TODO: criar pasta output
+// TODO: create output folder
 
 const express = require('express');
 const app = new express();
@@ -50,15 +49,13 @@ app.post('/message', async (req, res) => {
 
     if (req.body.MessageType == 'image') {
 
-        twiml.message('Sua imagem será processada em alguns minutos.');
-        // twiml.message('Your picture will be processed in a few minutes.');
+        twiml.message('Your image will be processed in a few minutes.');
         res.send(twiml.toString());
 
         const base64Image = await downloadTwilioMedia(req.body.MediaUrl0);
         // const maskImageBase64 = await encodeImage('input/mask.png');
 
-        // const PROMPT = `make me look like a cartoon. please ignore the background and focus only on the person or persons in front`;
-        const PROMPT = `Utilize a primeira imagem como fundo e máscara e adicione a pessoa da segunda imagem como se fosse um anime.`
+        const PROMPT = `Create a wholesome, hand-drawn caricature-style drawing of the person(s) in the photo. Black and white lined drawing, and use one standout color: red. Simple shapes, high contrast, expressive faces, minimal background, 2D flat shading. Focus on character and charm. Consider a transparent background, but make sure the body or any part of the people aren't transparent. Don't add any text overlay that could be on the original picture, unless it's something they are wearing. Person's face and body and eyes needs to have some color. Any part of the person or anything or any object on the image should not be transparent. Don't add any new person if the picture doesn't have it.`;
 
         console.log('maskFileId', maskFileId);
         const response = await openai.responses.create({
@@ -94,7 +91,7 @@ app.post('/message', async (req, res) => {
 
         if (imageData.length > 0) {
             const imageBase64 = imageData[0];
-            // Cria a pasta output se não existir
+            // Create output folder if it doesn't exist
             if (!fs.existsSync('output')) {
                 fs.mkdirSync('output');
             }
@@ -106,8 +103,7 @@ app.post('/message', async (req, res) => {
             await twilioClient.messages.create({
                 from: req.body.To,
                 to: req.body.From, 
-                // body: `Here is your picture`,
-                body: `Aqui está sua imagem`,
+                body: `Your new caricature-style drawing is ready.`,
                 mediaUrl: `https://${req.headers['x-forwarded-host']}/${req.body.SmsMessageSid}.png`
             })
 
@@ -116,8 +112,7 @@ app.post('/message', async (req, res) => {
         }
 
     } else {
-        // twiml.message('Please send a picture to start.');
-        twiml.message('Envie por favor sua selfie para começar.');
+        twiml.message('Please send a photo to start.');
         res.send(twiml.toString());
     }
 
