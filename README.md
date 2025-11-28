@@ -94,7 +94,7 @@ twilio_whatsapp_cartoongenerator/
 ├── utils.js              # Utility functions for media handling
 ├── package.json          # Dependencies and scripts
 ├── .env                  # Environment variables (create this)
-└── README.md            # This file
+└── README.md             # This file
 ```
 
 ## 🔧 API Endpoints
@@ -135,7 +135,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Ensure your server is publicly accessible for Twilio webhooks to work
 - The `input/mask.png` file is crucial for the anime transformation process
 - Generated images are stored in the `output/` directory
-- This bot currently supports Portuguese language responses
 - Make sure you have sufficient OpenAI credits for image generation
 
 ## 📞 Support

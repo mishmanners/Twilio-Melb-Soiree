@@ -120,8 +120,315 @@ app.post('/message', async (req, res) => {
 });
 
 
+// API endpoint to get list of all images
+app.get('/api/images', async (req, res) => {
+    try {
+        if (!fs.existsSync('output')) {
+            return res.json([]);
+        }
+        
+        const files = fs.readdirSync('output')
+            .filter(file => file.toLowerCase().endsWith('.png'))
+            .map(file => ({
+                name: file,
+                url: `/${file}`,
+                created: fs.statSync(`output/${file}`).birthtime
+            }))
+            .sort((a, b) => new Date(b.created) - new Date(a.created)); // Most recent first
+        
+        res.json(files);
+    } catch (error) {
+        console.error('Error reading images:', error);
+        res.status(500).json({ error: 'Failed to load images' });
+    }
+});
+
 app.get('/', async (req, res) => {
-    res.send('SITE FUNCIONAL')
+    res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartoon Gallery - AI Generated Images</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #dc2626 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .carousel-container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            border: 3px solid #1e3a8a;
+        }
+        
+        .carousel {
+            position: relative;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .carousel img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        
+        .carousel-nav:hover {
+            background: #b91c1c;
+        }
+        
+        .carousel-nav:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: #6b7280;
+        }
+        
+        .prev {
+            left: 20px;
+        }
+        
+        .next {
+            right: 20px;
+        }
+        
+        .carousel-info {
+            text-align: center;
+            padding: 20px;
+            background: #f8fafc;
+            border-top: 1px solid #1e3a8a;
+        }
+        
+        .image-counter {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 10px;
+        }
+        
+        .image-date {
+            color: #dc2626;
+            font-size: 0.9rem;
+        }
+        
+        .dots-container {
+            text-align: center;
+            padding: 15px;
+            background: #1e3a8a;
+        }
+        
+        .dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .dot.active {
+            background: #dc2626;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #1e3a8a;
+        }
+        
+        .no-images {
+            text-align: center;
+            padding: 50px;
+            color: #1e3a8a;
+        }
+        
+        .no-images h3 {
+            margin-bottom: 15px;
+            color: #1e3a8a;
+        }
+        
+        .refresh-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 20px;
+        }
+        
+        .refresh-btn:hover {
+            background: #b91c1c;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 AI Cartoon Gallery</h1>
+        <p>Generated anime-style images from WhatsApp bot</p>
+    </div>
+    
+    <div class="carousel-container">
+        <div id="loading" class="loading">
+            <p>Loading images...</p>
+        </div>
+        
+        <div id="no-images" class="no-images" style="display: none;">
+            <h3>No images found</h3>
+            <p>Send a selfie to the WhatsApp bot to generate your first cartoon!</p>
+            <button class="refresh-btn" onclick="loadImages()">Refresh</button>
+        </div>
+        
+        <div id="carousel" class="carousel" style="display: none;">
+            <button class="carousel-nav prev" id="prevBtn" onclick="changeImage(-1)">❮</button>
+            <img id="currentImage" src="" alt="Generated cartoon" />
+            <button class="carousel-nav next" id="nextBtn" onclick="changeImage(1)">❯</button>
+        </div>
+        
+        <div id="carousel-info" class="carousel-info" style="display: none;">
+            <div class="image-counter" id="imageCounter"></div>
+            <div class="image-date" id="imageDate"></div>
+        </div>
+        
+        <div id="dots-container" class="dots-container" style="display: none;"></div>
+    </div>
+    
+    <script>
+        let images = [];
+        let currentIndex = 0;
+        
+        async function loadImages() {
+            try {
+                const response = await fetch('/api/images');
+                images = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                if (images.length === 0) {
+                    document.getElementById('no-images').style.display = 'block';
+                } else {
+                    document.getElementById('carousel').style.display = 'flex';
+                    document.getElementById('carousel-info').style.display = 'block';
+                    document.getElementById('dots-container').style.display = 'block';
+                    setupCarousel();
+                }
+            } catch (error) {
+                console.error('Failed to load images:', error);
+                document.getElementById('loading').innerHTML = '<p>Failed to load images. Please refresh the page.</p>';
+            }
+        }
+        
+        function setupCarousel() {
+            createDots();
+            showImage(0);
+        }
+        
+        function createDots() {
+            const dotsContainer = document.getElementById('dots-container');
+            dotsContainer.innerHTML = '';
+            
+            images.forEach((_, index) => {
+                const dot = document.createElement('span');
+                dot.className = 'dot';
+                dot.onclick = () => showImage(index);
+                dotsContainer.appendChild(dot);
+            });
+        }
+        
+        function showImage(index) {
+            if (images.length === 0) return;
+            
+            currentIndex = index;
+            const image = images[currentIndex];
+            
+            document.getElementById('currentImage').src = image.url;
+            document.getElementById('imageCounter').textContent = \`\${currentIndex + 1} of \${images.length}\`;
+            document.getElementById('imageDate').textContent = new Date(image.created).toLocaleString();
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            document.getElementById('nextBtn').disabled = currentIndex === images.length - 1;
+            
+            // Update dots
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentIndex);
+            });
+        }
+        
+        function changeImage(direction) {
+            const newIndex = currentIndex + direction;
+            if (newIndex >= 0 && newIndex < images.length) {
+                showImage(newIndex);
+            }
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') changeImage(-1);
+            if (e.key === 'ArrowRight') changeImage(1);
+        });
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadImages, 30000);
+        
+        // Load images on page load
+        loadImages();
+    </script>
+</body>
+</html>
+    `);
 });
 
 const port = parseInt(process.env.PORT || '3001');
