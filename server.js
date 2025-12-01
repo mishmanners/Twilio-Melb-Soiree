@@ -1,7 +1,5 @@
 require('dotenv').config();
 
-// TODO: create output folder
-
 const express = require('express');
 const app = new express();
 
