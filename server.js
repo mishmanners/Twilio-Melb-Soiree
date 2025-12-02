@@ -36,6 +36,7 @@ async function createFile(filePath) {
 }
 
 const { downloadTwilioMedia, encodeImage } = require('./utils');
+const sharp = require('sharp');
 
 app.post('/message', async (req, res) => {
 
@@ -46,13 +47,13 @@ app.post('/message', async (req, res) => {
 
     if (req.body.MessageType == 'image') {
 
-        twiml.message('Your image will be processed in a few minutes.');
+        twiml.message('Your image is being processed ⏳. We\'ll send your message when it\'s ready 🎉.');
         res.send(twiml.toString());
 
         const base64Image = await downloadTwilioMedia(req.body.MediaUrl0);
         const maskImageBase64 = await encodeImage('input/mask.png');
 
-        const PROMPT = `Create a wholesome, hand-drawn caricature-style drawing of the person(s) in the photo. Black and white lined drawing, and use one standout color: red. Simple shapes, high contrast, expressive faces, minimal background, 2D flat shading. Focus on the exaggerated facial features that really shows the caricature style. Add some character and charm. Consider a transparent background, but make sure the body or any part of the people aren't transparent. Don't add any text overlay that could be on the original picture, unless it's something they are wearing. Any part of the person or anything or any object on the image should not be transparent. Don't add any new person if the picture doesn't have it.`;
+        const PROMPT = `Create a wholesome, caricature-style drawing of the person(s) in the photo. Black and white lined drawing, and only use one standout color: red. Simple shapes, high contrast, expressive faces, 2D flat shading. Use a minimal, plain white background. Focus on the exaggerated facial features that show the caricature style. Add some character and charm. Don't add any new person if the picture doesn't have it.`;
 
         console.log('maskFileId', maskFileId);
         const response = await openai.responses.create({
@@ -62,10 +63,10 @@ app.post('/message', async (req, res) => {
                     role: "user",
                     content: [
                         { type: "input_text", text: PROMPT },
-                         /* {
+                        {
                             type: "input_image",
                             file_id: maskFileId,
-                        }, */
+                        },
                         {
                             type: "input_image",
                             image_url: `data:image/png;base64,${maskImageBase64}`,
@@ -90,18 +91,32 @@ app.post('/message', async (req, res) => {
             const imageBase64 = imageData[0];
             // Create output folder if it doesn't exist
             if (!fs.existsSync('output')) {
-                fs.mkdirSync('output');
+            fs.mkdirSync('output');
             }
-            // Save the image to a file (e.g., PNG)
-            fs.writeFileSync(`output/${req.body.SmsMessageSid}.png`, Buffer.from(imageBase64, "base64"));
+            
+            // Save the generated image first
+            const generatedImagePath = `output/${req.body.SmsMessageSid}.png`;
+            fs.writeFileSync(generatedImagePath, Buffer.from(imageBase64, "base64"));
+            
+            // Apply mask to the generated image
+            const maskPath = 'input/mask.png';
+            const finalImagePath = `output/${req.body.SmsMessageSid}_twilio.png`;
+            
+            await sharp(generatedImagePath)
+            .composite([{ input: maskPath, blend: 'multiply' }])
+            .png()
+            .toFile(finalImagePath);
+            
+            // Clean up temporary generated image
+            fs.unlinkSync(generatedImagePath);
 
             // Send whatsapp message with image
             const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
             await twilioClient.messages.create({
-                from: req.body.To,
-                to: req.body.From, 
-                body: `Your new caricature-style drawing is ready.`,
-                mediaUrl: `https://${req.headers['x-forwarded-host']}/${req.body.SmsMessageSid}.png`
+            from: req.body.To,
+            to: req.body.From, 
+            body: `Your new caricature-style drawing is ready. Enjoy 🥳.`,
+            mediaUrl: `https://${req.headers['x-forwarded-host']}/${req.body.SmsMessageSid}_twilio.png`
             })
 
         } else {
