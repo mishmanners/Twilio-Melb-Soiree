@@ -57,6 +57,7 @@ app.post('/message', async (req, res) => {
 
         const response = await openai.responses.create({
             model: "gpt-4o-mini",
+            size: "1024x1536",
             input: [
                 {
                     role: "user",
