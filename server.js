@@ -53,9 +53,8 @@ app.post('/message', async (req, res) => {
         const base64Image = await downloadTwilioMedia(req.body.MediaUrl0);
         const maskImageBase64 = await encodeImage('input/mask.png');
 
-        const PROMPT = `Create a wholesome, hand-drawn caricature-style image of the person(s) in the photo. Black and white lined drawing, and only use one standout color: red. Simple shapes, high contrast, expressive faces, 2D flat shading. Use a minimal, plain white background. Focus on character and charm. Don't add any new person if the picture doesn't have it. Don't add any text overlay that could be on the original picture, unless it's something they are wearing.`;
+        const PROMPT = `Create a live event caricature style image of the person(s) in the photo. Have a big head, small body. Use high contrast, bold black lines, minimal shading. Exaggerate facial features, use a playful expression, like a quick caricature done at a party or traditional street‑artist caricature. Use only black and white with small accents of bright red (ie. on hat, lips, cheeks, or accessories), ignore any other colors in the image. Clean white background. Don't add any new person if the picture doesn't have it. Don't add any text overlay that could be on the original picture, unless it's something they are wearing.`;
 
-        console.log('maskFileId', maskFileId);
         const response = await openai.responses.create({
             model: "gpt-4o-mini",
             input: [
