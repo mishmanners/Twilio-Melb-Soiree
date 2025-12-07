@@ -20,4 +20,4 @@ Create your caricature artwork:
 
 Powered by Twilio Messaging and OpenAI. 
 
-[small text at the bottom for policy] Speak to a staff member if you have any questions or don't have WhatsApp. Your profile and number is shared with Twilio in order to create your image. This information is automatically deleted as per Twilio's privacy policy. 
+[small text at the bottom for policy] Speak to a staff member if you have any questions or don't have WhatsApp. Your profile and number are shared with Twilio in order to create your image. This information is automatically deleted as per Twilio's privacy policy. 
