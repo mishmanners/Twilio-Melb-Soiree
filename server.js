@@ -123,7 +123,7 @@ app.post('/message', async (req, res) => {
         }
 
     } else {
-        twiml.message('Please send any photo to start, and we\'ll create a fun caricature-style drawing for you 🎨.');
+        twiml.message('Please send any photo, and we\'ll create a fun caricature-style drawing for you 🎨.');
         res.send(twiml.toString());
     }
 
