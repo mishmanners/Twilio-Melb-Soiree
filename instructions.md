@@ -10,8 +10,6 @@ Create your caricature artwork:
 
 1. Scan the QR code and send us a photo
 
-[QR code, link here: https://wa.me/61468034161?text=Tap%20send%20to%20started]
-
 2. We’ll work some AI magic and turn it into a one-of-a-kind caricarture of your original picture.
 
 3. You'll receive the image directly on your phone
