@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #1e3a8a 0%, #dc2626 100%);
+    background: #000d25;
     min-height: 100vh;
     padding: 20px;
 }
@@ -59,7 +59,7 @@ body {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: #dc2626;
+    background: #F22F46;
     color: white;
     border: none;
     padding: 15px 20px;
@@ -70,7 +70,7 @@ body {
 }
 
 .carousel-nav:hover {
-    background: #b91c1c;
+    background: #F22F46;
 }
 
 .carousel-nav:disabled {
@@ -91,25 +91,25 @@ body {
     text-align: center;
     padding: 20px;
     background: #f8fafc;
-    border-top: 1px solid #1e3a8a;
+    border-top: 1px solid #000d25;
 }
 
 .image-counter {
     font-size: 1.1rem;
     font-weight: bold;
-    color: #1e3a8a;
+    color: #000d25;
     margin-bottom: 10px;
 }
 
 .image-date {
-    color: #dc2626;
+    color: #F22F46;
     font-size: 0.9rem;
 }
 
 .dots-container {
     text-align: center;
     padding: 15px;
-    background: #1e3a8a;
+    background: #000d25;
 }
 
 .dot {
@@ -124,28 +124,28 @@ body {
 }
 
 .dot.active {
-    background: #dc2626;
+    background: #F22F46;
 }
 
 .loading {
     text-align: center;
     padding: 50px;
-    color: #1e3a8a;
+    color: #000d25;
 }
 
 .no-images {
     text-align: center;
     padding: 50px;
-    color: #1e3a8a;
+    color: #000d25;
 }
 
 .no-images h3 {
     margin-bottom: 15px;
-    color: #1e3a8a;
+    color: #000d25;
 }
 
 .refresh-btn {
-    background: #dc2626;
+    background: #F22F46;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -156,5 +156,5 @@ body {
 }
 
 .refresh-btn:hover {
-    background: #b91c1c;
+    background: #F22F46;
 }
