@@ -102,7 +102,7 @@ app.post('/message', async (req, res) => {
             const finalImagePath = `output/${req.body.SmsMessageSid}_twilio.png`;
             
             await sharp(generatedImagePath)
-            .composite([{ input: maskPath, blend: 'multiply' }])
+            .composite([{ input: maskPath, blend: 'over' }]) // Changed from 'multiply' to 'over' to put mask on top
             .png()
             .toFile(finalImagePath);
             
