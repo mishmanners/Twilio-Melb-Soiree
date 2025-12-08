@@ -51,7 +51,17 @@ app.post('/message', async (req, res) => {
         res.send(twiml.toString());
 
         const base64Image = await downloadTwilioMedia(req.body.MediaUrl0);
-        const maskImageBase64 = await encodeImage('input/mask.png');
+
+        //Create input_images folder if it doesn't exist
+        /* uncomment this section if you want to save the input images
+        if (!fs.existsSync('input_images')) {
+            fs.mkdirSync('input_images');
+        }
+        
+        // Save the input image
+        const inputImagePath = `input_images/${req.body.SmsMessageSid}_input.${base64Image.contentType.split('/')[1]}`;
+        fs.writeFileSync(inputImagePath, Buffer.from(base64Image.base64, "base64"));
+        console.log('Saved input image:', inputImagePath); */
 
         const PROMPT = `Create a live event caricature style image of the person(s) in the photo. Make sure the image is in PORTRAIT orientation. Have a big head, small body. Use high contrast, bold black lines, minimal shading. Exaggerate facial features, use a playful expression, like a quick caricature done at a party or traditional street‑artist caricature. Use only black and white with small accents of bright red (ie. on hat, lips, cheeks, or accessories), ignore any and all other colors in the image. Clean white background. Don't add any new person if the picture doesn't have it. Don't add any text overlay that could be on the original picture, unless it's something they are wearing.`;
 
@@ -62,14 +72,6 @@ app.post('/message', async (req, res) => {
                     role: "user",
                     content: [
                         { type: "input_text", text: PROMPT },
-                        {
-                            type: "input_image",
-                            file_id: maskFileId,
-                        },
-                        {
-                            type: "input_image",
-                            image_url: `data:image/png;base64,${maskImageBase64}`,
-                        }, 
                         {
                             type: "input_image",
                             image_url: `data:${base64Image.contentType};base64,${base64Image.base64}`,
@@ -101,30 +103,13 @@ app.post('/message', async (req, res) => {
             const maskPath = 'input/mask.png';
             const finalImagePath = `output/${req.body.SmsMessageSid}_twilio.png`;
             
-            // Check if mask file exists before applying
-            if (fs.existsSync(maskPath)) {
-                // Read and process the mask to use red channel as alpha
-                const processedMask = await sharp(maskPath)
-                    .extractChannel('red') // Extract red channel
-                    .toBuffer();
-                
-                await sharp(generatedImagePath)
-                .composite([{ 
-                    input: processedMask, 
-                    blend: 'dest-in', // Use mask as alpha channel
-                    tile: false,
-                    gravity: 'centre'
-                }])
-                .png()
-                .toFile(finalImagePath);
-                
-                // Clean up temporary generated image
-                fs.unlinkSync(generatedImagePath);
-            } else {
-                // If no mask, just rename the generated image
-                fs.renameSync(generatedImagePath, finalImagePath);
-                console.log('Mask file not found, using image without mask');
-            }
+            await sharp(generatedImagePath)
+            .composite([{ input: maskPath, blend: 'over' }]) // Changed from 'multiply' to 'over' to put mask on top
+            .png()
+            .toFile(finalImagePath);
+            
+            // Clean up temporary generated image
+            fs.unlinkSync(generatedImagePath);
 
             // Send whatsapp message with image
             const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
