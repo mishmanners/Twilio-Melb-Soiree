@@ -101,13 +101,30 @@ app.post('/message', async (req, res) => {
             const maskPath = 'input/mask.png';
             const finalImagePath = `output/${req.body.SmsMessageSid}_twilio.png`;
             
-            await sharp(generatedImagePath)
-            .composite([{ input: maskPath, blend: 'over' }]) // Changed from 'multiply' to 'over' to put mask on top
-            .png()
-            .toFile(finalImagePath);
-            
-            // Clean up temporary generated image
-            fs.unlinkSync(generatedImagePath);
+            // Check if mask file exists before applying
+            if (fs.existsSync(maskPath)) {
+                // Read and process the mask to use red channel as alpha
+                const processedMask = await sharp(maskPath)
+                    .extractChannel('red') // Extract red channel
+                    .toBuffer();
+                
+                await sharp(generatedImagePath)
+                .composite([{ 
+                    input: processedMask, 
+                    blend: 'dest-in', // Use mask as alpha channel
+                    tile: false,
+                    gravity: 'centre'
+                }])
+                .png()
+                .toFile(finalImagePath);
+                
+                // Clean up temporary generated image
+                fs.unlinkSync(generatedImagePath);
+            } else {
+                // If no mask, just rename the generated image
+                fs.renameSync(generatedImagePath, finalImagePath);
+                console.log('Mask file not found, using image without mask');
+            }
 
             // Send whatsapp message with image
             const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
