@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cartoon Gallery - AI Generated Images</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="data:," />
     <style>
         .carousel-container {
             padding: 10px;
@@ -40,7 +39,7 @@
         
         <div id="carousel" class="carousel" style="display: none;">
             <button class="carousel-nav prev" id="prevBtn" onclick="changeImage(-1)">❮</button>
-            <img id="currentImage" src="" alt="Generated cartoon" />
+            <img id="currentImage" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Generated cartoon" onerror="this.style.display='none'" />
             <button class="carousel-nav next" id="nextBtn" onclick="changeImage(1)">❯</button>
         </div>
         
@@ -78,9 +77,7 @@
                         images = [...images, ...imagesToAdd];
                         
                         // Update dots for new images
-                        if (images.length > 1) {
-                            createDots();
-                        }
+                        createDots();
                     } else if (images.length === 0) {
                         // First time loading
                         images = newImages;
@@ -88,9 +85,9 @@
                     }
                     
                     if (images.length > 0) {
+                        document.getElementById('no-images').style.display = 'none';
                         document.getElementById('carousel').style.display = 'flex';
                         document.getElementById('dots-container').style.display = 'block';
-                        document.getElementById('no-images').style.display = 'none';
                     }
                 }
             } catch (error) {
@@ -102,9 +99,12 @@
         }
         
         function setupCarousel() {
-            createDots();
-            showImage(0);
-            startAutoAdvance();
+            if (images.length > 0) {
+                currentIndex = 0;
+                createDots();
+                showImage(0);
+                startAutoAdvance();
+            }
         }
         
         function startAutoAdvance() {
@@ -153,14 +153,25 @@
         }
         
         function showImage(index) {
-            if (images.length === 0) return;
+            if (images.length === 0 || index < 0 || index >= images.length) return;
             
             currentIndex = index;
             const image = images[currentIndex];
             
-            document.getElementById('currentImage').src = image.url;
+            // Ensure image object exists
+            if (!image || !image.url) {
+                console.error('Invalid image data at index:', index);
+                return;
+            }
+            
+            const imgElement = document.getElementById('currentImage');
+            imgElement.style.display = 'block';
+            imgElement.src = image.url;
+            
             document.getElementById('imageCounter').textContent = `${currentIndex + 1} of ${images.length}`;
-            document.getElementById('imageDate').textContent = new Date(image.created).toLocaleString();
+            if (image.created) {
+                document.getElementById('imageDate').textContent = new Date(image.created).toLocaleString();
+            }
             
             // Update navigation buttons
             document.getElementById('prevBtn').disabled = currentIndex === 0;
