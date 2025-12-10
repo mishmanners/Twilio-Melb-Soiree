@@ -81,13 +81,17 @@
                     } else if (images.length === 0) {
                         // First time loading
                         images = newImages;
-                        setupCarousel();
                     }
                     
                     if (images.length > 0) {
                         document.getElementById('no-images').style.display = 'none';
                         document.getElementById('carousel').style.display = 'flex';
                         document.getElementById('dots-container').style.display = 'block';
+                        
+                        // If this is first time setup or no current image, setup carousel
+                        if (currentIndex >= images.length || !document.getElementById('currentImage').src.includes('http')) {
+                            setupCarousel();
+                        }
                     }
                 }
             } catch (error) {
