@@ -60,21 +60,44 @@
         async function loadImages() {
             try {
                 const response = await fetch('/api/images');
-                images = await response.json();
+                const newImages = await response.json();
                 
                 document.getElementById('loading').style.display = 'none';
                 
-                if (images.length === 0) {
-                    document.getElementById('no-images').style.display = 'block';
+                if (newImages.length === 0) {
+                    if (images.length === 0) {
+                        document.getElementById('no-images').style.display = 'block';
+                    }
                 } else {
-                    document.getElementById('carousel').style.display = 'flex';
-                    // document.getElementById('carousel-info').style.display = 'block'; // removes the time and date stamp
-                    document.getElementById('dots-container').style.display = 'block';
-                    setupCarousel();
+                    // Check if there are new images to add
+                    const existingUrls = images.map(img => img.url);
+                    const imagesToAdd = newImages.filter(img => !existingUrls.includes(img.url));
+                    
+                    if (imagesToAdd.length > 0) {
+                        // Append new images to existing array
+                        images = [...images, ...imagesToAdd];
+                        
+                        // Update dots for new images
+                        if (images.length > 1) {
+                            createDots();
+                        }
+                    } else if (images.length === 0) {
+                        // First time loading
+                        images = newImages;
+                        setupCarousel();
+                    }
+                    
+                    if (images.length > 0) {
+                        document.getElementById('carousel').style.display = 'flex';
+                        document.getElementById('dots-container').style.display = 'block';
+                        document.getElementById('no-images').style.display = 'none';
+                    }
                 }
             } catch (error) {
                 console.error('Failed to load images:', error);
-                document.getElementById('loading').innerHTML = '<p>Failed to load images. Please refresh the page.</p>';
+                if (images.length === 0) {
+                    document.getElementById('loading').innerHTML = '<p>Failed to load images. Please refresh the page.</p>';
+                }
             }
         }
         
@@ -93,8 +116,13 @@
             // Only start auto-advance if there are multiple images
             if (images.length > 1) {
                 autoAdvanceInterval = setInterval(() => {
-                    const nextIndex = (currentIndex + 1) % images.length;
-                    showImage(nextIndex);
+                    const nextIndex = currentIndex + 1;
+                    if (nextIndex < images.length) {
+                        showImage(nextIndex);
+                    } else {
+                        // Go back to start only when we reach the end
+                        showImage(0);
+                    }
                 }, 5000); // 5 seconds
             }
         }

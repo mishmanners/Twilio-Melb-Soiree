@@ -129,6 +129,17 @@ app.post('/message', async (req, res) => {
         res.send(twiml.toString());
     }
 
+    // send a message to the user if there is an error during processing
+    try {
+    } catch (error) {
+        console.error('Error processing image:', error);
+        const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+        await twilioClient.messages.create({
+            from: req.body.To,
+            to: req.body.From, 
+            body: `We're really sorry, there was an error processing your image. Please resend the image, and we'll try again.`
+        });
+    }
 
 });
 
