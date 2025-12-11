@@ -1,23 +1,22 @@
-
 require('dotenv').config();
-
-// TODO: criar pasta output
 
 const express = require('express');
 const app = new express();
 
 const fs = require('fs');
 
+const path = require('path');
+
+app.use(express.static('public'));
+app.use(express.static('output'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static('output'));
 
 let maskFileId = null;
 
 const twilio = require('twilio');
 const {
-    TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
-    OPENAI_API_KEY
+    TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, OPENAI_API_KEY
 } = process.env;
 
 
@@ -25,7 +24,6 @@ const { OpenAI } = require('openai');
 const openai = new OpenAI({
     apiKey: OPENAI_API_KEY
 });
-
 
 
 async function createFile(filePath) {
@@ -37,30 +35,36 @@ async function createFile(filePath) {
     return result.id;
 }
 
-
 const { downloadTwilioMedia, encodeImage } = require('./utils');
+const sharp = require('sharp');
 
 app.post('/message', async (req, res) => {
 
     const twiml = new twilio.twiml.MessagingResponse();
     console.log('x-forwarded-host', req.headers['x-forwarded-host']);
-
-    // Your logic here    
+ 
     console.log('body', req.body);
 
     if (req.body.MessageType == 'image') {
 
-        twiml.message('Sua imagem será processada em alguns minutos.');
-        // twiml.message('Your picture will be processed in a few minutes.');
+        twiml.message('Your image is being processed ⏳. We\'ll send your message when it\'s ready 🎉.');
         res.send(twiml.toString());
 
         const base64Image = await downloadTwilioMedia(req.body.MediaUrl0);
-        // const maskImageBase64 = await encodeImage('input/mask.png');
 
-        // const PROMPT = `make me look like a cartoon. please ignore the background and focus only on the person or persons in front`;
-        const PROMPT = `Utilize a primeira imagem como fundo e máscara e adicione a pessoa da segunda imagem como se fosse um anime.`
+        //Create input_images folder if it doesn't exist
+        /* uncomment this section if you want to save the input images
+        if (!fs.existsSync('input_images')) {
+            fs.mkdirSync('input_images');
+        }
+        
+        // Save the input image
+        const inputImagePath = `input_images/${req.body.SmsMessageSid}_input.${base64Image.contentType.split('/')[1]}`;
+        fs.writeFileSync(inputImagePath, Buffer.from(base64Image.base64, "base64"));
+        console.log('Saved input image:', inputImagePath); */
 
-        console.log('maskFileId', maskFileId);
+        const PROMPT = `Create a live event caricature style image of the person(s) in the photo. Make sure the image is in PORTRAIT orientation using dimensions "1024x1536". Have a big head, small body. Use high contrast, bold black lines, minimal shading. Exaggerate facial features, use a playful expression, like a quick caricature done at a party or traditional street‑artist caricature. Use only black and white with small accents of bright red (ie. on hat, lips, cheeks, or accessories), ignore any and all other colors in the image, and don't include them in the new image. Clean white background. Don't add any new person if the picture doesn't have it. Don't add any text overlay that could be on the original picture, unless it's something they are wearing.`;
+
         const response = await openai.responses.create({
             model: "gpt-4o-mini",
             input: [
@@ -68,14 +72,6 @@ app.post('/message', async (req, res) => {
                     role: "user",
                     content: [
                         { type: "input_text", text: PROMPT },
-                        {
-                            type: "input_image",
-                            file_id: maskFileId,
-                        },
-                        // {
-                        //     type: "input_image",
-                        //     image_url: `data:image/png;base64,${maskImageBase64}`,
-                        // },
                         {
                             type: "input_image",
                             image_url: `data:${base64Image.contentType};base64,${base64Image.base64}`,
@@ -94,21 +90,34 @@ app.post('/message', async (req, res) => {
 
         if (imageData.length > 0) {
             const imageBase64 = imageData[0];
-            // Cria a pasta output se não existir
+            // Create output folder if it doesn't exist
             if (!fs.existsSync('output')) {
-                fs.mkdirSync('output');
+            fs.mkdirSync('output');
             }
-            // Save the image to a file (e.g., PNG)
-            fs.writeFileSync(`output/${req.body.SmsMessageSid}.png`, Buffer.from(imageBase64, "base64"));
+            
+            // Save the generated image first
+            const generatedImagePath = `output/${req.body.SmsMessageSid}.png`;
+            fs.writeFileSync(generatedImagePath, Buffer.from(imageBase64, "base64"));
+            
+            // Apply mask to the generated image
+            const maskPath = 'input/mask.png';
+            const finalImagePath = `output/${req.body.SmsMessageSid}_twilio.png`;
+            
+            await sharp(generatedImagePath)
+            .composite([{ input: maskPath, blend: 'over' }]) // Changed from 'multiply' to 'over' to put mask on top
+            .png()
+            .toFile(finalImagePath);
+            
+            // Clean up temporary generated image
+            fs.unlinkSync(generatedImagePath);
 
             // Send whatsapp message with image
             const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
             await twilioClient.messages.create({
-                from: req.body.To,
-                to: req.body.From, 
-                // body: `Here is your picture`,
-                body: `Aqui está sua imagem`,
-                mediaUrl: `https://${req.headers['x-forwarded-host']}/${req.body.SmsMessageSid}.png`
+            from: req.body.To,
+            to: req.body.From, 
+            body: `Your new caricature-style drawing is ready. Enjoy 🥳.`,
+            mediaUrl: `https://${req.headers['x-forwarded-host']}/${req.body.SmsMessageSid}_twilio.png`
             })
 
         } else {
@@ -116,17 +125,49 @@ app.post('/message', async (req, res) => {
         }
 
     } else {
-        // twiml.message('Please send a picture to start.');
-        twiml.message('Envie por favor sua selfie para começar.');
+        twiml.message('Please send any photo, and we\'ll create a fun caricature-style drawing for you 🎨.');
         res.send(twiml.toString());
     }
 
+    // send a message to the user if there is an error during processing
+    try {
+    } catch (error) {
+        console.error('Error processing image:', error);
+        const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+        await twilioClient.messages.create({
+            from: req.body.To,
+            to: req.body.From, 
+            body: `We're really sorry, there was an error processing your image. Please resend the image, and we'll try again.`
+        });
+    }
 
 });
 
+// API endpoint to get list of all images
+app.get('/api/images', async (req, res) => {
+    try {
+        if (!fs.existsSync('output')) {
+            return res.json([]);
+        }
+        
+        const files = fs.readdirSync('output')
+            .filter(file => file.toLowerCase().endsWith('.png'))
+            .map(file => ({
+                name: file,
+                url: `/${file}`,
+                created: fs.statSync(`output/${file}`).birthtime
+            }))
+            .sort((a, b) => new Date(b.created) - new Date(a.created)); // Most recent first
+        
+        res.json(files);
+    } catch (error) {
+        console.error('Error reading images:', error);
+        res.status(500).json({ error: 'Failed to load images' });
+    }
+});
 
-app.get('/', async (req, res) => {
-    res.send('SITE FUNCIONAL')
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const port = parseInt(process.env.PORT || '3001');

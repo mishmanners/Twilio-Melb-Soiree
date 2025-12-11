@@ -1,3 +1,4 @@
+const fs = require('fs');
 
 exports.downloadTwilioMedia = async (mediaUrl) => {
     const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN } = process.env;
