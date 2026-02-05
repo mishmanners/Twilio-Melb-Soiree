@@ -33,7 +33,7 @@ Before running this application, make sure you have:
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd twilio_whatsapp_cartoongenerator
+   cd <new-location>
    ```
 
 2. **Install dependencies**
